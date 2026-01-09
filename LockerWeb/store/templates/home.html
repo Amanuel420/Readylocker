@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+
+{% block title %}Ready Locker - Secure Storage Solutions{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-20 sm:py-32 lg:py-40 bg-gradient-to-b from-white to-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-gray-900">
+          Secure storage.<br />
+          <span class="text-primary">Zero friction.</span>
+        </h1>
+        <p class="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed max-w-xl">
+          Book a locker in minutes. Control access online. Your stuff stays locked down.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          {% if user.is_authenticated %}
+            <a href="#lockers" class="bg-primary hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 inline-block text-center shadow-lg">
+              Browse Lockers
+            </a>
+          {% else %}
+            <a href="{% url 'register' %}" class="bg-primary hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 inline-block text-center shadow-lg">
+              Get Started Free
+            </a>
+            <a href="{% url 'login' %}" class="bg-white hover:bg-gray-50 text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg transition-all border-2 border-gray-300 inline-block text-center shadow-sm">
+              Sign In
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="hidden lg:flex lg:justify-center">
+        <img 
+          src="/media/uploads/background.jpg" 
+          alt="Locker preview" 
+          class="rounded-xl border border-gray-200 shadow-2xl w-96 object-cover" 
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Search Section -->
+<section class="py-12 bg-white border-b border-gray-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <form method="GET" action="{% url 'home' %}" class="flex flex-col sm:flex-row gap-3">
+      <input 
+        type="search" 
+        name="search" 
+        placeholder="Search locations or locker numbers" 
+        value="{{ search_query }}"
+        class="flex-1 px-6 py-4 bg-white border-2 border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+      <button 
+        type="submit" 
+        class="bg-primary hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors whitespace-nowrap shadow-lg"
+      >
+        Search
+      </button>
+    </form>
+  </div>
+</section>
+
+<!-- Filters Section -->
+<section class="py-8 bg-gray-50 border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <form method="GET" action="{% url 'home' %}" class="flex flex-wrap gap-4 items-end">
+      <div class="flex flex-col">
+        <label for="location" class="text-sm text-gray-700 mb-2 font-medium">Location</label>
+        <select 
+          name="location" 
+          id="location"
+          class="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        >
+          <option value="">All Locations</option>
+          {% for location in locations %}
+            <option value="{{ location.id }}" {% if selected_location == location.id|stringformat:"s" %}selected{% endif %}>
+              {{ location.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex flex-col">
+        <label for="size" class="text-sm text-gray-700 mb-2 font-medium">Size</label>
+        <select 
+          name="size" 
+          id="size"
+          class="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        >
+          <option value="">All Sizes</option>
+          <option value="small" {% if selected_size == 'small' %}selected{% endif %}>Small</option>
+          <option value="medium" {% if selected_size == 'medium' %}selected{% endif %}>Medium</option>
+          <option value="large" {% if selected_size == 'large' %}selected{% endif %}>Large</option>
+          <option value="xlarge" {% if selected_size == 'xlarge' %}selected{% endif %}>Extra Large</option>
+        </select>
+      </div>
+      <button 
+        type="submit" 
+        class="bg-primary hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-md"
+      >
+        Filter
+      </button>
+      <a 
+        href="{% url 'home' %}" 
+        class="bg-white hover:bg-gray-50 text-gray-900 px-6 py-2 rounded-lg font-medium transition-colors border-2 border-gray-300 inline-block shadow-sm"
+      >
+        Clear
+      </a>
+    </form>
+  </div>
+</section>
+
+<!-- Lockers Section -->
+<section id="lockers" class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-12 text-center text-gray-900">Available Lockers</h2>
+    {% if lockers %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for locker in lockers %}
+          <div class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary/50 transition-all hover:shadow-xl hover:-translate-y-1">
+            <div class="flex items-center justify-between mb-4">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold
+                {% if locker.status == 'available' %}bg-green-100 text-green-700
+                {% elif locker.status == 'occupied' %}bg-red-100 text-red-700
+                {% else %}bg-orange-100 text-orange-700{% endif %}">
+                {{ locker.get_status_display }}
+              </span>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-primary">
+              {{ locker.location.name }} - #{{ locker.locker_number }}
+            </h3>
+            <p class="text-gray-600 mb-2"><strong>Size:</strong> {{ locker.get_size_display }}</p>
+            <p class="text-gray-600 mb-4"><strong>Location:</strong> {{ locker.location.name }}</p>
+            {% if locker.description %}
+              <p class="text-gray-500 text-sm mb-4 line-clamp-2">{{ locker.description|truncatewords:15 }}</p>
+            {% endif %}
+            <div class="text-2xl font-bold text-gray-900 mb-4">${{ locker.daily_price }}/day</div>
+            <a 
+              href="{% url 'locker_detail' locker.id %}" 
+              class="block w-full bg-primary hover:bg-red-700 text-white text-center px-6 py-3 rounded-lg font-semibold transition-colors shadow-md"
+            >
+              View Details
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16">
+        <p class="text-gray-600 text-lg mb-4">No lockers available matching your criteria.</p>
+        <a href="{% url 'home' %}" class="text-primary hover:text-red-600 underline">View all lockers</a>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-20 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-16 text-center text-gray-900">Why Ready Locker</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900">Secure</h3>
+        <p class="text-gray-600">24/7 monitoring and controlled access.</p>
+      </div>
+      <div class="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900">Flexible</h3>
+        <p class="text-gray-600">Multiple sizes. Cancel anytime.</p>
+      </div>
+      <div class="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900">Affordable</h3>
+        <p class="text-gray-600">Clear pricing. No nonsense.</p>
+      </div>
+      <div class="text-center bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2 text-gray-900">Online</h3>
+        <p class="text-gray-600">Manage everything from your phone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+{% if not user.is_authenticated %}
+<section class="py-20 bg-white">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl sm:text-4xl font-bold mb-6 text-gray-900">Ready to get started?</h2>
+    <p class="text-lg text-gray-600 mb-8">Join thousands of users who trust Ready Locker for their storage needs.</p>
+    <a href="{% url 'register' %}" class="inline-block bg-primary hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+      Create Free Account
+    </a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

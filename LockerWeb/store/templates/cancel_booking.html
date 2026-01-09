@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Cancel Booking - Ready Locker{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <a href="{% url 'my_bookings' %}" class="inline-flex items-center text-gray-600 hover:text-primary transition-colors mb-6">
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Back to My Bookings
+  </a>
+
+  <div class="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
+    <h1 class="text-3xl font-bold mb-6 text-primary">Cancel Booking</h1>
+
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+      <strong class="block text-lg mb-2 text-red-900">Are you sure you want to cancel this booking?</strong>
+      <p class="text-red-700">
+        This action cannot be undone. The locker will become available for other users.
+      </p>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200">
+      <h2 class="text-xl font-bold mb-6 text-gray-900">Booking Details</h2>
+      <div class="space-y-4">
+        <div class="flex justify-between py-3 border-b border-gray-200">
+          <span class="text-gray-600">Locker</span>
+          <span class="font-semibold text-gray-900">{{ booking.locker.location.name }} - #{{ booking.locker.locker_number }}</span>
+        </div>
+        <div class="flex justify-between py-3 border-b border-gray-200">
+          <span class="text-gray-600">Size</span>
+          <span class="font-semibold text-gray-900">{{ booking.locker.get_size_display }}</span>
+        </div>
+        <div class="flex justify-between py-3 border-b border-gray-200">
+          <span class="text-gray-600">Start Date</span>
+          <span class="font-semibold text-gray-900">{{ booking.start_date }}</span>
+        </div>
+        <div class="flex justify-between py-3 border-b border-gray-200">
+          <span class="text-gray-600">End Date</span>
+          <span class="font-semibold text-gray-900">{{ booking.end_date }}</span>
+        </div>
+        <div class="flex justify-between py-3">
+          <span class="text-gray-600">Total Price</span>
+          <span class="font-semibold text-primary">${{ booking.total_price }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="flex flex-col sm:flex-row gap-4">
+        <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md">
+          Yes, Cancel Booking
+        </button>
+        <a href="{% url 'my_bookings' %}" class="flex-1 bg-white hover:bg-gray-50 text-gray-900 text-center py-3 rounded-lg font-semibold transition-colors border-2 border-gray-300 shadow-sm">
+          No, Keep Booking
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

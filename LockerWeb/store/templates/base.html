@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Ready Locker - Secure Storage Solutions{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#c62828',
+            secondary: '#1f2937',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-white text-gray-900 min-h-screen flex flex-col">
+  
+  <!-- Navbar -->
+  <header class="border-b border-gray-200 bg-white sticky top-0 z-50 shadow-sm">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex-shrink-0">
+          <a href="{% url 'home' %}" class="text-2xl font-bold tracking-tight text-gray-900 hover:text-primary transition-colors">
+            READY LOCKER
+          </a>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-10 flex items-baseline space-x-8">
+            <a href="{% url 'home' %}" class="text-gray-700 hover:text-primary transition-colors font-medium">Home</a>
+            <a href="{% url 'about' %}" class="text-gray-700 hover:text-primary transition-colors font-medium">About</a>
+            {% if user.is_authenticated %}
+              <a href="{% url 'my_bookings' %}" class="text-gray-700 hover:text-primary transition-colors font-medium">My Bookings</a>
+              <a href="{% url 'logout' %}" class="text-gray-700 hover:text-primary transition-colors font-medium">Logout</a>
+            {% else %}
+              <a href="{% url 'login' %}" class="text-gray-700 hover:text-primary transition-colors font-medium">Login</a>
+              <a href="{% url 'register' %}" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">Sign Up</a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="md:hidden">
+          <button type="button" class="mobile-menu-button text-gray-700 hover:text-primary" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="mobile-menu" class="hidden md:hidden pb-4">
+        <div class="flex flex-col space-y-2">
+          <a href="{% url 'home' %}" class="text-gray-700 hover:text-primary transition-colors font-medium px-2 py-1">Home</a>
+          <a href="{% url 'about' %}" class="text-gray-700 hover:text-primary transition-colors font-medium px-2 py-1">About</a>
+          {% if user.is_authenticated %}
+            <a href="{% url 'my_bookings' %}" class="text-gray-700 hover:text-primary transition-colors font-medium px-2 py-1">My Bookings</a>
+            <a href="{% url 'logout' %}" class="text-gray-700 hover:text-primary transition-colors font-medium px-2 py-1">Logout</a>
+          {% else %}
+            <a href="{% url 'login' %}" class="text-gray-700 hover:text-primary transition-colors font-medium px-2 py-1">Login</a>
+            <a href="{% url 'register' %}" class="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors inline-block text-center">Sign Up</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-grow">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-200 bg-gray-50 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div class="col-span-1 md:col-span-2">
+          <h3 class="text-xl font-bold mb-4 text-gray-900">Ready Locker</h3>
+          <p class="text-gray-600 text-sm leading-relaxed max-w-md">
+            Secure storage solutions with zero friction. Book a locker in minutes, manage everything online.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4 text-gray-900">Quick Links</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="{% url 'home' %}" class="text-gray-600 hover:text-primary transition-colors">Home</a></li>
+            <li><a href="{% url 'about' %}" class="text-gray-600 hover:text-primary transition-colors">About</a></li>
+            {% if user.is_authenticated %}
+              <li><a href="{% url 'my_bookings' %}" class="text-gray-600 hover:text-primary transition-colors">My Bookings</a></li>
+            {% else %}
+              <li><a href="{% url 'login' %}" class="text-gray-600 hover:text-primary transition-colors">Login</a></li>
+              <li><a href="{% url 'register' %}" class="text-gray-600 hover:text-primary transition-colors">Register</a></li>
+            {% endif %}
+          <li><a href="{% url 'terms' %}" class="text-gray-600 hover:text-primary transition-colors">Terms &amp; Conditions</a></li>
+          <li><a href="{% url 'privacy' %}" class="text-gray-600 hover:text-primary transition-colors">Privacy Policy</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-4 text-gray-900">Support</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="{% url 'about' %}" class="text-gray-600 hover:text-primary transition-colors">Help Center</a></li>
+            <li><a href="{% url 'about' %}" class="text-gray-600 hover:text-primary transition-colors">Contact Us</a></li>
+          <li><a href="{% url 'terms' %}" class="text-gray-600 hover:text-primary transition-colors">Terms &amp; Conditions</a></li>
+          <li><a href="{% url 'privacy' %}" class="text-gray-600 hover:text-primary transition-colors">Privacy Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-8 pt-8 border-t border-gray-200 text-center text-sm text-gray-600">
+        <p>&copy; 2024 Ready Locker. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

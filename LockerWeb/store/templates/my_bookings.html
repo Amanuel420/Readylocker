@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - Ready Locker{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <div class="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
+    <h1 class="text-3xl sm:text-4xl font-bold mb-2 text-gray-900">My Bookings</h1>
+    <p class="text-gray-600 mb-8">Manage your locker reservations</p>
+    
+    <div class="flex flex-wrap gap-3 mb-8">
+      <a href="{% url 'my_bookings' %}" class="px-4 py-2 rounded-lg font-medium transition-colors {% if not status_filter %}bg-primary text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        All
+      </a>
+      <a href="{% url 'my_bookings' %}?status=pending" class="px-4 py-2 rounded-lg font-medium transition-colors {% if status_filter == 'pending' %}bg-primary text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        Pending
+      </a>
+      <a href="{% url 'my_bookings' %}?status=active" class="px-4 py-2 rounded-lg font-medium transition-colors {% if status_filter == 'active' %}bg-primary text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        Active
+      </a>
+      <a href="{% url 'my_bookings' %}?status=completed" class="px-4 py-2 rounded-lg font-medium transition-colors {% if status_filter == 'completed' %}bg-primary text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        Completed
+      </a>
+      <a href="{% url 'my_bookings' %}?status=cancelled" class="px-4 py-2 rounded-lg font-medium transition-colors {% if status_filter == 'cancelled' %}bg-primary text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+        Cancelled
+      </a>
+    </div>
+    
+    {% if bookings %}
+      <div class="space-y-6">
+        {% for booking in bookings %}
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-6">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6">
+              <div>
+                <h2 class="text-xl font-bold mb-2 text-gray-900">
+                  {{ booking.locker.location.name }} - Locker #{{ booking.locker.locker_number }}
+                </h2>
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold
+                  {% if booking.status == 'active' %}bg-green-100 text-green-700
+                  {% elif booking.status == 'pending' %}bg-orange-100 text-orange-700
+                  {% elif booking.status == 'completed' %}bg-gray-100 text-gray-700
+                  {% else %}bg-red-100 text-red-700{% endif %}">
+                  {{ booking.get_status_display }}
+                </span>
+              </div>
+              <div class="text-2xl font-bold text-primary mt-4 sm:mt-0">${{ booking.total_price }}</div>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-sm text-gray-600 mb-1">Size</div>
+                <div class="font-semibold text-gray-900">{{ booking.locker.get_size_display }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-sm text-gray-600 mb-1">Start Date</div>
+                <div class="font-semibold text-gray-900">{{ booking.start_date }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-sm text-gray-600 mb-1">End Date</div>
+                <div class="font-semibold text-gray-900">{{ booking.end_date }}</div>
+              </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-sm text-gray-600 mb-1">Booked On</div>
+                <div class="font-semibold text-gray-900">{{ booking.created_at|date:"M d, Y" }}</div>
+              </div>
+            </div>
+            
+            {% if booking.special_instructions %}
+              <div class="bg-white rounded-lg p-4 mb-6 border border-gray-200">
+                <div class="text-sm text-gray-600 mb-2 font-medium">Special Instructions</div>
+                <p class="text-gray-700">{{ booking.special_instructions }}</p>
+              </div>
+            {% endif %}
+            
+            <div class="flex flex-wrap gap-4 pt-6 border-t border-gray-200">
+              <a href="{% url 'locker_detail' booking.locker.id %}" class="bg-gray-100 hover:bg-gray-200 text-gray-900 px-6 py-2 rounded-lg font-semibold transition-colors border border-gray-300">
+                View Locker
+              </a>
+              {% if booking.status in 'pending,active' %}
+                <a href="{% url 'cancel_booking' booking.id %}" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-md">
+                  Cancel Booking
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16">
+        <p class="text-gray-600 text-lg mb-4">No bookings found{% if status_filter %} with status "{{ status_filter }}"{% endif %}.</p>
+        <a href="{% url 'home' %}" class="text-primary hover:text-red-600 underline">Browse available lockers</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
