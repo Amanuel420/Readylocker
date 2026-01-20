@@ -1,123 +1,46 @@
 {% extends 'base.html' %}
-
-{% block title %}Book {{ locker }} - Ready Locker{% endblock %}
+{% block title %}Book Storage - {{ location.name }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-  <a href="{% url 'locker_detail' locker.id %}" class="inline-flex items-center text-gray-600 hover:text-primary transition-colors mb-6">
-    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-    </svg>
-    Back to Locker Details
+  <a href="{% url 'location_detail' location.id %}" class="inline-flex items-center text-gray-600 hover:text-primary transition-colors mb-6">
+    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+    Back to Location
   </a>
 
   <div class="bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-    <h1 class="text-3xl font-bold mb-8 text-gray-900">Book Locker</h1>
+    <h1 class="text-3xl font-bold mb-8 text-gray-900">Finalize Booking</h1>
 
     <div class="bg-gray-50 rounded-lg p-6 mb-8 border border-gray-200">
-      <h2 class="text-xl font-bold mb-4 text-gray-900">{{ locker.location.name }} - Locker #{{ locker.locker_number }}</h2>
-      <p class="text-gray-600 mb-2"><strong>Size:</strong> {{ locker.get_size_display }}</p>
-      <p class="text-2xl font-bold text-primary mt-4">${{ locker.daily_price }}/day</p>
+      <h2 class="text-xl font-bold mb-2 text-gray-900">{{ location.name }}</h2>
+      <p class="text-gray-600 mb-1">{{ location.address }}</p>
+      <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+          <span class="font-bold text-lg text-gray-700">{{ locker_size }} Cabinet</span>
+          <span class="text-2xl font-bold text-primary">${{ price }}/day</span>
+      </div>
     </div>
 
     <form method="POST">
       {% csrf_token %}
-      
       <div class="mb-6">
         <label for="id_start_date" class="block text-sm font-medium mb-2 text-gray-700">Start Date *</label>
         {{ form.start_date }}
-        {% if form.start_date.help_text %}
-          <div class="mt-2 text-sm text-gray-500">{{ form.start_date.help_text }}</div>
-        {% endif %}
-        {% if form.start_date.errors %}
-          <ul class="mt-2 text-sm text-red-600">
-            {% for error in form.start_date.errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
       </div>
-
       <div class="mb-6">
         <label for="id_end_date" class="block text-sm font-medium mb-2 text-gray-700">End Date *</label>
         {{ form.end_date }}
-        {% if form.end_date.help_text %}
-          <div class="mt-2 text-sm text-gray-500">{{ form.end_date.help_text }}</div>
-        {% endif %}
-        {% if form.end_date.errors %}
-          <ul class="mt-2 text-sm text-red-600">
-            {% for error in form.end_date.errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
       </div>
-
       <div class="mb-6">
         <label for="id_special_instructions" class="block text-sm font-medium mb-2 text-gray-700">Special Instructions (Optional)</label>
         {{ form.special_instructions }}
-        {% if form.special_instructions.help_text %}
-          <div class="mt-2 text-sm text-gray-500">{{ form.special_instructions.help_text }}</div>
-        {% endif %}
-        {% if form.special_instructions.errors %}
-          <ul class="mt-2 text-sm text-red-600">
-            {% for error in form.special_instructions.errors %}
-              <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
       </div>
-
-      {% if form.non_field_errors %}
-        <ul class="mb-6 text-sm text-red-600">
-          {% for error in form.non_field_errors %}
-            <li>{{ error }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
+      {% if form.non_field_errors %}<div class="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">{{ form.non_field_errors }}</div>{% endif %}
 
       <div class="flex flex-col sm:flex-row gap-4">
-        <button type="submit" class="flex-1 bg-primary hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md">
-          Confirm Booking
-        </button>
-        <a href="{% url 'locker_detail' locker.id %}" class="flex-1 bg-white hover:bg-gray-50 text-gray-900 text-center py-3 rounded-lg font-semibold transition-colors border-2 border-gray-300 shadow-sm">
-          Cancel
-        </a>
+        <button type="submit" class="flex-1 bg-primary hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors shadow-md">Confirm & Pay</button>
+        <a href="{% url 'location_detail' location.id %}" class="flex-1 bg-white hover:bg-gray-50 text-gray-900 text-center py-3 rounded-lg font-semibold transition-colors border-2 border-gray-300 shadow-sm">Cancel</a>
       </div>
     </form>
   </div>
 </div>
-
-{% block extra_css %}
-<style>
-  form input[type="text"],
-  form input[type="email"],
-  form input[type="password"],
-  form input[type="date"],
-  form textarea,
-  form select {
-    width: 100%;
-    padding: 0.75rem;
-    background: white;
-    border: 2px solid #d1d5db;
-    border-radius: 0.5rem;
-    color: #111827;
-    font-size: 1rem;
-  }
-  form input[type="text"]:focus,
-  form input[type="email"]:focus,
-  form input[type="password"]:focus,
-  form input[type="date"]:focus,
-  form textarea:focus,
-  form select:focus {
-    outline: none;
-    border-color: #c62828;
-    box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
-  }
-  form textarea {
-    resize: vertical;
-    min-height: 100px;
-  }
-</style>
-{% endblock %}
 {% endblock %}
