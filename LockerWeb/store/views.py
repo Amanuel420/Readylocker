@@ -2,13 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q, Count, Min
 from datetime import date
 import json
 
 from .models import Locker, Booking, Location
-from .forms import SignUpForm, BookingForm
+from .forms import SignUpForm, BookingForm, LocationForm, LockerForm
 
 def home(request):
     locations = Location.objects.all()
@@ -21,10 +21,7 @@ def home(request):
 
     for loc in locations:
         available_lockers = Locker.objects.filter(location=loc, status='available')
-        
         valid_locations.append(loc)
-        
-        # We build the list here, but we DO NOT convert to JSON string yet
         map_data.append({
             'id': loc.id,
             'name': loc.name,
@@ -36,14 +33,13 @@ def home(request):
 
     context = {
         'locations': valid_locations,
-        'map_data': map_data, # <--- CHANGED: Passed as raw list, not string
+        'map_data': map_data,
         'search_query': search,
     }
     return render(request, 'home.html', context)
 
 def location_detail(request, pk):
     location = get_object_or_404(Location, pk=pk)
-    
     available_sizes = (
         Locker.objects
         .filter(location=location, status='available')
@@ -51,7 +47,6 @@ def location_detail(request, pk):
         .annotate(price=Min('daily_price'), count=Count('id'))
         .order_by('size')
     )
-    
     size_choices_dict = dict(Locker.SIZE_CHOICES)
     detailed_sizes = []
     for item in available_sizes:
@@ -61,22 +56,13 @@ def location_detail(request, pk):
             'price': item['price'],
             'count': item['count']
         })
-
-    context = {
-        'location': location,
-        'available_sizes': detailed_sizes,
-    }
+    context = {'location': location, 'available_sizes': detailed_sizes}
     return render(request, 'location_detail.html', context)
 
 @login_required
 def book_cabinet(request, location_id, size):
     location = get_object_or_404(Location, pk=location_id)
-    
-    locker = Locker.objects.filter(
-        location=location, 
-        size=size, 
-        status='available'
-    ).first()
+    locker = Locker.objects.filter(location=location, size=size, status='available').first()
     
     if not locker:
         messages.error(request, "Sorry, there are no longer lockers of that size available at this location.")
@@ -89,10 +75,8 @@ def book_cabinet(request, location_id, size):
             end_date = form.cleaned_data['end_date']
             
             overlapping = Booking.objects.filter(
-                locker=locker,
-                status__in=['pending', 'active'],
-                start_date__lte=end_date,
-                end_date__gte=start_date
+                locker=locker, status__in=['pending', 'active'],
+                start_date__lte=end_date, end_date__gte=start_date
             ).exists()
             
             if overlapping:
@@ -114,15 +98,11 @@ def book_cabinet(request, location_id, size):
     else:
         form = BookingForm()
     
-    context = {
-        'location': location,
-        'locker_size': dict(Locker.SIZE_CHOICES).get(size),
-        'price': locker.daily_price,
-        'form': form,
-    }
+    context = {'location': location, 'locker_size': dict(Locker.SIZE_CHOICES).get(size), 'price': locker.daily_price, 'form': form}
     return render(request, 'book_locker.html', context)
 
-# ... (Include login_user, register_user, logout_user, my_bookings, cancel_booking, etc. from previous steps) ...
+# --- AUTH VIEWS ---
+
 def login_user(request):
     if request.method == "POST":
         username = request.POST['username']
@@ -186,7 +166,52 @@ def cancel_booking(request, pk):
         messages.success(request, "Booking cancelled successfully.")
         return redirect('my_bookings')
     return render(request, 'cancel_booking.html', {'booking': booking})
-    
+
+# --- MARKETPLACE / SELLER VIEWS ---
+
+def is_seller_check(user):
+    return user.is_authenticated and hasattr(user, 'customer') and user.customer.is_seller
+
+@login_required
+@user_passes_test(is_seller_check, login_url='/login/')
+def marketplace_dashboard(request):
+    # Show locations owned by this user
+    locations = Location.objects.filter(owner=request.user)
+    return render(request, 'marketplace/dashboard.html', {'locations': locations})
+
+@login_required
+@user_passes_test(is_seller_check, login_url='/login/')
+def add_location(request):
+    if request.method == 'POST':
+        form = LocationForm(request.POST, request.FILES)
+        if form.is_valid():
+            location = form.save(commit=False)
+            location.owner = request.user
+            location.save()
+            messages.success(request, "New location added successfully!")
+            return redirect('marketplace_dashboard')
+    else:
+        form = LocationForm()
+    return render(request, 'marketplace/add_location.html', {'form': form})
+
+@login_required
+@user_passes_test(is_seller_check, login_url='/login/')
+def add_locker(request, location_id):
+    location = get_object_or_404(Location, pk=location_id, owner=request.user)
+    if request.method == 'POST':
+        form = LockerForm(request.POST, request.FILES)
+        if form.is_valid():
+            locker = form.save(commit=False)
+            locker.location = location
+            locker.save()
+            messages.success(request, "Locker added successfully!")
+            return redirect('marketplace_dashboard')
+    else:
+        form = LockerForm()
+    return render(request, 'marketplace/add_locker.html', {'form': form, 'location': location})
+
+# --- STATIC PAGES ---
+
 def about(request):
     return render(request, 'about.html', {})
 def terms_and_conditions(request):

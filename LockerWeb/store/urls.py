@@ -18,6 +18,11 @@ urlpatterns = [
     # User Dashboard
     path('my-bookings/', views.my_bookings, name="my_bookings"),
     path('booking/<int:pk>/cancel/', views.cancel_booking, name="cancel_booking"),
+
+    # Marketplace (Sellers Only)
+    path('marketplace/', views.marketplace_dashboard, name='marketplace_dashboard'),
+    path('marketplace/add-location/', views.add_location, name='add_location'),
+    path('marketplace/location/<int:location_id>/add-locker/', views.add_locker, name='add_locker'),
     
     # Legal
     path('terms-and-conditions/', views.terms_and_conditions, name='terms'),

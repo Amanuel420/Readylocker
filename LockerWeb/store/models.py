@@ -16,6 +16,9 @@ class Customer(models.Model):
     last_name = models.CharField(max_length=50)
     phone = models.CharField(max_length=15)
     email = models.EmailField(max_length=100)
+    # --- NEW FIELD ---
+    is_seller = models.BooleanField(default=False, verbose_name="Is a Seller?") 
+
     def __str__(self): return f'{self.first_name} {self.last_name}'
 
 class Location(models.Model):
@@ -35,6 +38,9 @@ class Location(models.Model):
         ('WV', 'West Virginia'), ('WI', 'Wisconsin'), ('WY', 'Wyoming')
     ]
 
+    # --- NEW FIELD ---
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="owned_locations")
+    
     name = models.CharField(max_length=100)
     street_address = models.CharField(max_length=255, verbose_name="Street Address")
     city = models.CharField(max_length=100)
@@ -55,33 +61,21 @@ class Location(models.Model):
         return f"{self.street_address}, {self.city}, {self.state} {self.zip_code}"
     
     def save(self, *args, **kwargs):
-        # Only attempt to find address if we have one
         if self.street_address and self.city:
             try:
-                # FIX 1: Ignore SSL Certificate errors (Fixes your terminal error)
                 ctx = ssl._create_unverified_context()
-                
-                # FIX 2: Use ArcGIS instead of Nominatim (Better for US addresses)
                 geolocator = ArcGIS(user_agent="ready_locker_app_v4", ssl_context=ctx)
                 
-                # ATTEMPT 1: Exact Address
                 location_string = f"{self.street_address}, {self.city}, {self.state} {self.zip_code}"
-                print(f"Trying Address: {location_string}")
                 location = geolocator.geocode(location_string)
                 
-                # ATTEMPT 2: Fallback to Zip Code (If street is new/unknown)
                 if not location:
-                    print("  -> Exact address not found. Using Zip Code fallback...")
                     fallback_string = f"{self.city}, {self.state} {self.zip_code}"
                     location = geolocator.geocode(fallback_string)
 
                 if location:
                     self.latitude = location.latitude
                     self.longitude = location.longitude
-                    print(f"  -> SUCCESS! Mapped to: {self.latitude}, {self.longitude}")
-                else:
-                    print("  -> FAILED: Could not map this location.")
-                    
             except Exception as e:
                 print(f"Geocoding Error: {e}")
                 
