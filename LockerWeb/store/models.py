@@ -80,6 +80,7 @@ class Location(models.Model):
                 print(f"Geocoding Error: {e}")
                 
         super().save(*args, **kwargs)
+# inside models.py
 
 class Locker(models.Model):
     SIZE_CHOICES = [
@@ -93,7 +94,9 @@ class Locker(models.Model):
         ('occupied', 'Occupied'),
         ('maintenance', 'Under Maintenance'),
     ]
-    locker_number = models.CharField(max_length=20)
+    
+    # Changed: blank=True allows the form to be empty so we can auto-generate it
+    locker_number = models.CharField(max_length=20, blank=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='lockers')
     size = models.CharField(max_length=20, choices=SIZE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
@@ -105,11 +108,23 @@ class Locker(models.Model):
 
     class Meta:
         ordering = ['location', 'locker_number']
-        unique_together = ('location', 'locker_number')
+        # We removed unique_together for locker_number temporarily to allow the save method to handle it safely
+        # or you can keep it if you ensure the save method always produces a unique ID.
+
+    def save(self, *args, **kwargs):
+        # Auto-generate locker_number if it is empty
+        if not self.locker_number:
+            # Count existing lockers at this location to determine the next number
+            count = Locker.objects.filter(location=self.location).count()
+            self.locker_number = str(count + 1)
+        
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.location.name} - Locker #{self.locker_number} ({self.get_size_display()})"
-
+        # Shows as "City - LocationName - Locker #1"
+        return f"{self.location.city} - {self.location.name} - Locker #{self.locker_number}"
+    
+    
 class Booking(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),

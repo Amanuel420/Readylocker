@@ -74,14 +74,24 @@ class LocationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields:
             self.fields[field].widget.attrs.update({'class': 'form-control mb-2'})
+# inside forms.py
 
 class LockerForm(forms.ModelForm):
     class Meta:
         model = Locker
-        # Exclude location, we set that in the view
         fields = ['locker_number', 'size', 'daily_price', 'status', 'description', 'image']
-        
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Make locker_number optional so auto-generation works
+        self.fields['locker_number'].required = False
+        self.fields['locker_number'].widget.attrs.update({
+            'class': 'form-control mb-2', 
+            'placeholder': 'Leave blank to auto-generate'
+        })
+        
+        # Style other fields
         for field in self.fields:
-            self.fields[field].widget.attrs.update({'class': 'form-control mb-2'})
+            if field != 'locker_number':
+                self.fields[field].widget.attrs.update({'class': 'form-control mb-2'})

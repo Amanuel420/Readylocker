@@ -1,57 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}{{ location.name }} - Ready Locker{% endblock %}
+{% block title %}{{ location.city }} - {{ location.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-  <div class="mb-8">
-    <a href="{% url 'home' %}" class="inline-flex items-center text-gray-600 hover:text-primary transition-colors">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-      Back to Locations
-    </a>
-  </div>
-
-  <div class="bg-white border border-gray-200 rounded-xl p-8 shadow-sm mb-12">
-    <div class="flex flex-col md:flex-row gap-8">
-        {% if location.image %}
-        <div class="w-full md:w-1/3">
-            <img src="{{ location.image.url }}" alt="{{ location.name }}" class="w-full h-48 object-cover rounded-lg shadow-md">
-        </div>
-        {% endif %}
-        
-        <div class="w-full {% if location.image %}md:w-2/3{% endif %}">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ location.name }}</h1>
-            <p class="text-xl text-gray-600 mb-4">{{ location.address }}</p>
-            {% if location.description %}<p class="text-gray-500">{{ location.description }}</p>{% endif %}
-        </div>
+<div class="max-w-7xl mx-auto px-4 py-8">
+    
+    <div class="mb-8 border-b pb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            {{ location.city }} - {{ location.name }}
+        </h1>
+        <p class="text-gray-600">{{ location.street_address }}, {{ location.state }} {{ location.zip_code }}</p>
     </div>
-  </div>
 
-  <h2 class="text-2xl font-bold text-gray-900 mb-6">Select a Cabinet Size</h2>
+    <div class="flex flex-wrap gap-3 mb-8">
+        <span class="self-center font-semibold text-gray-700 mr-2">Filter by Size:</span>
+        
+        <a href="{% url 'location_detail' location.id %}" 
+           class="px-4 py-2 rounded-full border transition-colors 
+           {% if not current_filter %}bg-blue-600 text-white border-blue-600{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-50{% endif %}">
+           All
+        </a>
+        
+        <a href="?size=small" 
+           class="px-4 py-2 rounded-full border transition-colors 
+           {% if current_filter == 'small' %}bg-blue-600 text-white border-blue-600{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-50{% endif %}">
+           Small
+        </a>
+        
+        <a href="?size=medium" 
+           class="px-4 py-2 rounded-full border transition-colors 
+           {% if current_filter == 'medium' %}bg-blue-600 text-white border-blue-600{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-50{% endif %}">
+           Medium
+        </a>
+        
+        <a href="?size=large" 
+           class="px-4 py-2 rounded-full border transition-colors 
+           {% if current_filter == 'large' %}bg-blue-600 text-white border-blue-600{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-50{% endif %}">
+           Large
+        </a>
 
-  {% if available_sizes %}
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-    {% for cabinet in available_sizes %}
-      <div class="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-primary transition-all hover:-translate-y-1 shadow-sm">
-        <div class="flex justify-between items-start mb-4">
-            <h3 class="text-xl font-bold text-gray-900">{{ cabinet.name }}</h3>
-            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">{{ cabinet.count }} Available</span>
-        </div>
-        <div class="mb-6">
-            <div class="h-24 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
-                <div class="bg-gray-400 rounded {% if cabinet.code == 'small' %}w-8 h-8{% elif cabinet.code == 'medium' %}w-12 h-12{% elif cabinet.code == 'large' %}w-16 h-16{% else %}w-20 h-20{% endif %}"></div>
+        <a href="?size=xlarge" 
+           class="px-4 py-2 rounded-full border transition-colors 
+           {% if current_filter == 'xlarge' %}bg-blue-600 text-white border-blue-600{% else %}bg-white text-gray-600 border-gray-300 hover:bg-gray-50{% endif %}">
+           Extra Large
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for locker in lockers %}
+        <div class="bg-white border rounded-lg p-6 shadow-sm hover:shadow-md transition duration-200">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <span class="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-bold uppercase tracking-wide">
+                        Locker #{{ locker.locker_number }}
+                    </span>
+                    <h3 class="mt-2 text-xl font-bold text-gray-900">{{ locker.get_size_display }}</h3>
+                </div>
+                <div class="text-right">
+                    <span class="block text-xl font-bold text-green-600">${{ locker.daily_price }}</span>
+                    <span class="text-xs text-gray-500">per day</span>
+                </div>
             </div>
-            <p class="text-center text-sm text-gray-500">Secure Storage</p>
+            
+            <p class="text-gray-600 text-sm mb-6 min-h-[40px]">
+                {{ locker.description|default:"Secure storage unit available for daily rental." }}
+            </p>
+            
+            <a href="{% url 'book_cabinet' location.id locker.size %}" 
+               class="block w-full bg-blue-600 text-white text-center py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+               Book This Locker
+            </a>
         </div>
-        <div class="text-center mb-6">
-            <span class="text-3xl font-bold text-primary">${{ cabinet.price }}</span>
-            <span class="text-gray-500">/day</span>
-        </div>
-        <a href="{% url 'book_cabinet' location.id cabinet.code %}" class="block w-full bg-primary hover:bg-red-700 text-white text-center px-4 py-3 rounded-lg font-bold transition-colors">Rent {{ cabinet.name }}</a>
-      </div>
-    {% endfor %}
-  </div>
-  {% else %}
-    <div class="text-center py-12 bg-gray-50 rounded-xl"><p class="text-gray-600 text-lg">Sorry, no cabinets available at this location.</p></div>
-  {% endif %}
+        {% empty %}
+            <div class="col-span-full text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <p class="text-gray-500 text-lg">No lockers available for the selected size.</p>
+                <a href="{% url 'location_detail' location.id %}" class="text-blue-600 hover:underline mt-2 inline-block">View all sizes</a>
+            </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

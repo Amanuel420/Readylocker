@@ -9,6 +9,8 @@ import json
 
 from .models import Locker, Booking, Location
 from .forms import SignUpForm, BookingForm, LocationForm, LockerForm
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Location, Locker # ensure these are imported
 
 def home(request):
     locations = Location.objects.all()
@@ -37,26 +39,27 @@ def home(request):
         'search_query': search,
     }
     return render(request, 'home.html', context)
-
 def location_detail(request, pk):
     location = get_object_or_404(Location, pk=pk)
-    available_sizes = (
-        Locker.objects
-        .filter(location=location, status='available')
-        .values('size')
-        .annotate(price=Min('daily_price'), count=Count('id'))
-        .order_by('size')
-    )
-    size_choices_dict = dict(Locker.SIZE_CHOICES)
-    detailed_sizes = []
-    for item in available_sizes:
-        detailed_sizes.append({
-            'code': item['size'],
-            'name': size_choices_dict.get(item['size']),
-            'price': item['price'],
-            'count': item['count']
-        })
-    context = {'location': location, 'available_sizes': detailed_sizes}
+    
+    # Get all lockers for this location
+    lockers = location.lockers.all()
+
+    # 1. Filter by Status (usually only show available to customers)
+    # You can remove this line if you want to see ALL lockers including occupied ones
+    lockers = lockers.filter(status='available')
+
+    # 2. Filter by Size (from URL parameter, e.g., ?size=medium)
+    size_filter = request.GET.get('size') # getting the clicked size
+    
+    if size_filter and size_filter != 'all':
+        lockers = lockers.filter(size=size_filter)
+
+    context = {
+        'location': location,
+        'lockers': lockers,
+        'current_filter': size_filter, # To highlight the active button
+    }
     return render(request, 'location_detail.html', context)
 
 @login_required
