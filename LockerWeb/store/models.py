@@ -5,6 +5,8 @@ from decimal import Decimal
 import datetime
 import ssl
 from geopy.geocoders import ArcGIS
+import random
+import string
 
 class Category(models.Model):
     name = models.CharField(max_length=50)
@@ -16,7 +18,6 @@ class Customer(models.Model):
     last_name = models.CharField(max_length=50)
     phone = models.CharField(max_length=15)
     email = models.EmailField(max_length=100)
-    # --- NEW FIELD ---
     is_seller = models.BooleanField(default=False, verbose_name="Is a Seller?") 
 
     def __str__(self): return f'{self.first_name} {self.last_name}'
@@ -38,9 +39,7 @@ class Location(models.Model):
         ('WV', 'West Virginia'), ('WI', 'Wisconsin'), ('WY', 'Wyoming')
     ]
 
-    # --- NEW FIELD ---
     owner = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="owned_locations")
-    
     name = models.CharField(max_length=100)
     street_address = models.CharField(max_length=255, verbose_name="Street Address")
     city = models.CharField(max_length=100)
@@ -80,7 +79,6 @@ class Location(models.Model):
                 print(f"Geocoding Error: {e}")
                 
         super().save(*args, **kwargs)
-# inside models.py
 
 class Locker(models.Model):
     SIZE_CHOICES = [
@@ -95,7 +93,6 @@ class Locker(models.Model):
         ('maintenance', 'Under Maintenance'),
     ]
     
-    # Changed: blank=True allows the form to be empty so we can auto-generate it
     locker_number = models.CharField(max_length=20, blank=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name='lockers')
     size = models.CharField(max_length=20, choices=SIZE_CHOICES)
@@ -108,22 +105,15 @@ class Locker(models.Model):
 
     class Meta:
         ordering = ['location', 'locker_number']
-        # We removed unique_together for locker_number temporarily to allow the save method to handle it safely
-        # or you can keep it if you ensure the save method always produces a unique ID.
 
     def save(self, *args, **kwargs):
-        # Auto-generate locker_number if it is empty
         if not self.locker_number:
-            # Count existing lockers at this location to determine the next number
             count = Locker.objects.filter(location=self.location).count()
             self.locker_number = str(count + 1)
-        
         super().save(*args, **kwargs)
 
     def __str__(self):
-        # Shows as "City - LocationName - Locker #1"
         return f"{self.location.city} - {self.location.name} - Locker #{self.locker_number}"
-    
     
 class Booking(models.Model):
     STATUS_CHOICES = [
@@ -141,6 +131,9 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     special_instructions = models.TextField(blank=True)
+    
+    # Randomly generated unlock code
+    unlock_code = models.CharField(max_length=6, blank=True, null=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -156,4 +149,9 @@ class Booking(models.Model):
     def save(self, *args, **kwargs):
         if not self.total_price:
             self.total_price = self.calculate_total_price()
+            
+        # Generate a 6-digit unlock code if it doesn't exist
+        if not self.unlock_code:
+            self.unlock_code = ''.join(random.choices(string.digits, k=6))
+            
         super().save(*args, **kwargs)
